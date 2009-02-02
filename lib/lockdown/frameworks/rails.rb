@@ -67,9 +67,10 @@ module Lockdown
          
           maybe_load_framework_controller_parent
 
+          filename = (RAILS_GEM_VERSION >= "2.3") ? "application_controller.rb" : "application.rb"
           Dir.chdir("#{Lockdown.project_root}/app/controllers") do
             Dir["**/*.rb"].sort.each do |c|
-              next if c == "application.rb"
+              next if c == filename
               lockdown_load(c) 
             end
           end
@@ -84,10 +85,11 @@ module Lockdown
         end
 
         def maybe_load_framework_controller_parent
+          filename = (RAILS_GEM_VERSION >= "2.3") ? "application_controller.rb" : "application.rb"
           if ActiveSupport.const_defined?("Dependencies")
-            ActiveSupport::Dependencies.require_or_load("application.rb")
+            ActiveSupport::Dependencies.require_or_load(filename)
           else
-            Dependencies.require_or_load("application.rb")
+            Dependencies.require_or_load(filename)
           end
         end
 

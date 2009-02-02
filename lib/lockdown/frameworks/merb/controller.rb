@@ -14,7 +14,9 @@ module Lockdown
         # Locking methods
         module Lock
           def self.included(base)
-            base.send :include, Lockdown::Frameworks::Merb::Controller::Lock::InstanceMethods
+            base.class_eval do 
+              include Lockdown::Frameworks::Merb::Controller::Lock::InstanceMethods
+            end
 
             base.before :set_current_user
             base.before :configure_lockdown
@@ -23,7 +25,9 @@ module Lockdown
 
           module InstanceMethods
             def self.included(base)
-              base.send :include, Lockdown::Controller::Core
+              base.class_eval do
+                include Lockdown::CoreController
+              end
             end
 
             def sent_from_uri

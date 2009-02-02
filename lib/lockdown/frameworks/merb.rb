@@ -15,9 +15,15 @@ module Lockdown
         end
 
         def mixin
-          Lockdown.controller_parent.send :include, Lockdown::Frameworks::Merb::Controller::Lock
-          Lockdown.view_helper.send :include, Lockdown::Frameworks::Merb::View
-          Lockdown::System.send :extend, Lockdown::Frameworks::Merb::System
+          Lockdown.controller_parent.class_eval do
+            include Lockdown::Frameworks::Merb::Controller::Lock
+          end
+          Lockdown.view_helper.class_eval do
+            include Lockdown::Frameworks::Merb::View
+          end
+          Lockdown::System.class_eval do
+            extend Lockdown::Frameworks::Merb::System
+          end
         end
       end # class block
 
@@ -46,6 +52,10 @@ module Lockdown
 
       module System
         include Lockdown::Frameworks::Merb::Controller
+
+        def skip_sync?
+          Lockdown::System.fetch(:skip_db_sync_in).include?(Merb.environment)
+        end
 
         def load_controller_classes
           @controller_classes = {}

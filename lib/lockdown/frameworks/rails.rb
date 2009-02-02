@@ -15,9 +15,15 @@ module Lockdown
         end
 
         def mixin
-          Lockdown.controller_parent.send :include, Lockdown::Frameworks::Rails::Controller::Lock
-          Lockdown.view_helper.send :include, Lockdown::Frameworks::Rails::View
-          Lockdown::System.send :extend, Lockdown::Frameworks::Rails::System
+          Lockdown.controller_parent.class_eval do
+            include Lockdown::Frameworks::Rails::Controller::Lock
+          end
+          Lockdown.view_helper.class_eval do
+            include Lockdown::Frameworks::Rails::View
+          end
+          Lockdown::System.class_eval do 
+            extend Lockdown::Frameworks::Rails::System
+          end
         end
       end # class block
 
@@ -25,6 +31,10 @@ module Lockdown
 
         def project_root
           RAILS_ROOT
+        end
+
+        def init_file
+          "#{project_root}/lib/lockdown/init.rb"
         end
 
         def controller_parent
@@ -47,6 +57,10 @@ module Lockdown
 
       module System
         include Lockdown::Frameworks::Rails::Controller
+
+        def skip_sync?
+          Lockdown::System.fetch(:skip_db_sync_in).include?(ENV['RAILS_ENV'])
+        end
 
         def load_controller_classes
           @controller_classes = {}

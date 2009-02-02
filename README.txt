@@ -1,45 +1,20 @@
-= lockdown
-
-http://stonean.com/wiki/lockdown
+lockdown
+    by Andrew Stone
+    http://stonean.com
 
 == DESCRIPTION:
 
-Lockdown is a authentication/authorization system for RubyOnRails. (Merb compatibility coming soon).
-
-For more information please visit stonean.com
-
-== REQUIREMENTS:
-
-Lockdown currently supports:
-
-Frameworks: RubyOnRails 
-
-ORMs: ActiveRecord 
+Lockdown is a authentication/authorization system for RubyOnRails (ver >= 2.1).
 
 == INSTALL:
 
-# Install the gem
-
-sudo gem install lockdown
-
-# Go to your application root directory
-
-cd <your application>
-
-# Install lockdown to your application
-
-lockdown .
-
-# Modify lib/lockdown/init.rb to set defaults and grant access 
-  to your application
-
-# Modify lib/lockdown/session.rb to add/remove session information
+  sudo gem install lockdown 
 
 == LICENSE:
 
 (The MIT License)
 
-Copyright (c) 2008 Andrew Stone
+Copyright (c) 2009 Andrew Stone
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

@@ -1,3 +1,16 @@
+== 0.7.1 2009-01-xx
+* Update init.rb with documentation on how to use admin namespaces
+
+== 0.7.0 2009-01-xx
+* Removed lockdown as an executable.  Will always go through the generator used by the framework.
+* Removed references to classy inheritance.  Directly coded some of classy inheritance's functionality into User model.
+
+== 0.6.3 2008-12-02
+* Fixed: Database sync was failing.  Cause of refactor. Apologies
+
+== 0.6.2 2008-12-01
+* Fixed: Made call to action_methods instead of calculating controller actions
+
 == 0.6.1 2008-11-21
 * Fixed: Named routes were not being honored in link_to 
 

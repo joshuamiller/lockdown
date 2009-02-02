@@ -51,7 +51,7 @@ module Lockdown
         @user_groups.each do |key|
           str = Lockdown.get_string(key)
           unless ug = UserGroup.find(:first, :conditions => ["name = ?", str])
-            create_user_group(str)
+            create_user_group(str, key)
           else
             # Remove permissions from user group not found in init.rb
             remove_invalid_permissions(ug, key)
@@ -62,7 +62,7 @@ module Lockdown
         end
       end
 
-      def create_user_group(name_str)
+      def create_user_group(name_str, key)
         puts ">> Lockdown: UserGroup not in the db: #{name_str}, creating."
         ug = UserGroup.create(:name => name_str)
         #Inefficient, definitely, but shouldn't have any issues across orms.
@@ -79,7 +79,7 @@ module Lockdown
         ug.permissions.each do |perm|
           perm_sym = Lockdown.get_symbol(perm)
           perm_string = Lockdown.get_string(perm)
-          unless @user_groups[key].include?(perm_sym)
+          unless Lockdown::System.permissions_for_user_group(key).include?(perm_sym)
             puts ">> Lockdown: Permission: #{perm_string} no longer associated to User Group: #{ug.name}, deleting."
             ug.permissions.delete(perm)
           end
@@ -87,7 +87,7 @@ module Lockdown
       end
 
       def add_valid_permissions(ug, key)
-        @user_groups[key].each do |perm|
+        Lockdown::System.permissions_for_user_group(key).each do |perm|
           perm_string = Lockdown.get_string(perm)
           found = false
           # see if permission exists

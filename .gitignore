@@ -1,6 +1,6 @@
 *.DS_Store
 *.swp
-nbproject/**
 pkg/**
 doc/**
 email.txt
+coverage/**

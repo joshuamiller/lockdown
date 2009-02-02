@@ -3,7 +3,7 @@
 if Rails::VERSION::MAJOR >= 2 && Rails::VERSION::MINOR >= 1 
   if Rails::VERSION::TINY == 0
     @override_next_migration_string = true
-  elsif ActiveRecord::Base.timestamped_migrations 
+  elsif ActiveRecord::Base.timestamped_migrations
     @override_next_migration_string = true
   end
 end
@@ -35,6 +35,9 @@ class LockdownGenerator < Rails::Generator::Base
     @view_path = "app/views"
     @controller_path = "app/controllers"
     @helper_path = "app/helpers"
+    @lib_path = "lib/lockdown"
+
+    @initializer = "config/environment.rb"
 
     if @namespace
       @view_path += "/#{@namespace}"
@@ -44,12 +47,17 @@ class LockdownGenerator < Rails::Generator::Base
   end
 
   def manifest
-    record do |m|
-      @m = m
+    record do |@m|
       # Ensure appropriate folder(s) exists
       @m.directory @view_path
       @m.directory @controller_path
       @m.directory @helper_path
+      @m.directory @lib_path
+
+      unless options[:skip_rules]
+        @m.template "lib/lockdown/session.rb", "lib/lockdown/session.rb"
+        @m.file "lib/lockdown/init.rb", "lib/lockdown/init.rb"
+      end
 
       if options[:basics]
         options[:skip_management] = true
@@ -61,6 +69,8 @@ class LockdownGenerator < Rails::Generator::Base
       add_login unless options[:skip_login]
 
       add_models
+      
+      @m.file "config/initializers/lockit.rb", "config/initializers/lockit.rb"
     end #record do |m|
   end
 
@@ -78,9 +88,6 @@ class LockdownGenerator < Rails::Generator::Base
     copy_views("users")
 
     copy_views("user_groups")
-
-    @m.template "app/views/permissions/_data.html.erb",
-      "#{@view_path}/permissions/_data.html.erb"
 
     @m.template "app/views/permissions/index.html.erb",
       "#{@view_path}/permissions/index.html.erb"
@@ -123,8 +130,6 @@ class LockdownGenerator < Rails::Generator::Base
   end
 
   def copy_views(vw)
-    @m.template "app/views/#{vw}/_data.html.erb", "#{@view_path}/#{vw}/_data.html.erb"
-    @m.template "app/views/#{vw}/_form.html.erb", "#{@view_path}/#{vw}/_form.html.erb"
     @m.template "app/views/#{vw}/index.html.erb", "#{@view_path}/#{vw}/index.html.erb"
     @m.template "app/views/#{vw}/show.html.erb", "#{@view_path}/#{vw}/show.html.erb"
     @m.template "app/views/#{vw}/edit.html.erb", "#{@view_path}/#{vw}/edit.html.erb"
@@ -187,7 +192,9 @@ class LockdownGenerator < Rails::Generator::Base
 Installs the lockdown framework to managing users user_groups 
 and viewing permissions. Also includes a login screen.
 
-By default the entire set of stubs are installed.  Please use the appropriate options to customize your install. 
+By default the entire set of stubs are installed.  
+
+Please use the appropriate options to customize your install. 
 
 USAGE: #{$0} #{spec.name} 
 EOS
@@ -199,11 +206,13 @@ EOS
     opt.on("--namespace=admin",
       "Install lockdown templates with a namespace, in this example 'admin'.") { |v| options[:namespace] = v }
     opt.on("--skip-management",
-      "Generate everything but management screens. (controllers, helpers and views for users, permissions and user_groups are not generated). Renders namespace option meaningless.") { |v| options[:skip_management] = v }
+      "Only lib/lockdown and app/models are generated.") { |v| options[:skip_management] = v }
     opt.on("--skip-login",
-      "Generate everything but login (sessions controller and sessions view dir).") { |v| options[:skip_login] = v }
+      "Skips generation of session controller and views.") { |v| options[:skip_login] = v }
     opt.on("--basics",
       "Install only models and migrations.  Equivalent to skip-management and skip-login.") { |v| options[:basics] = v }
+    opt.on("--skip-rules",
+        "Skip installation of lib/lockdown/init.rb lib/lockdown/session.rb") { |v| options[:skip_rules] = v }
     opt.on("--skip-migrations",
       "Skip migrations installation") { |v| options[:skip_migrations] = v }
   end
@@ -241,4 +250,5 @@ EOS
       "#{match}\n  #{str}"
     end
   end
+  
 end

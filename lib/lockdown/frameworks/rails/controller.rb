@@ -4,7 +4,11 @@ module Lockdown
       module Controller
         
         def available_actions(klass)
-          klass.public_instance_methods - klass.hidden_actions
+          if klass.respond_to?(:action_methods)
+            klass.action_methods
+          else
+            klass.public_instance_methods - klass.hidden_actions
+          end
         end
 
         def controller_name(klass)
@@ -14,7 +18,11 @@ module Lockdown
         # Locking methods
         module Lock
           def self.included(base)
-            base.send :include, Lockdown::Frameworks::Rails::Controller::Lock::InstanceMethods
+            base.class_eval do
+              include Lockdown::Frameworks::Rails::Controller::Lock::InstanceMethods
+
+              helper_method :authorized?
+            end
 
             base.before_filter do |c|
               c.set_current_user
@@ -22,7 +30,6 @@ module Lockdown
               c.check_request_authorization
             end
 
-            base.send :helper_method, :authorized?
 
             base.filter_parameter_logging :password, :password_confirmation
       
@@ -31,39 +38,37 @@ module Lockdown
 
           module InstanceMethods
             def self.included(base)
-              base.send :include, Lockdown::Controller::Core
+              base.class_eval do
+                include Lockdown::CoreController
+              end
             end
 
             def sent_from_uri
               request.request_uri
             end
         
-            def authorized?(url)
+            def authorized?(url, method = nil)
               return false unless url
+
               return true if current_user_is_admin?
 
+              method ||= request.method
+
               url_parts = URI::split(url.strip)
-              # remove id from path, e.g.: /users/1/edit to  users/edit
-              path = url_parts[5].split("/").collect do |p|
-                p unless p =~ /\A\d+\z/ || p.strip.length == 0
-              end.compact.join("/")
 
-              ## See if path is known
-              return true if path_allowed?(path)
+              url = url_parts[5]
 
-              # Test for a named routed
+              return true if path_allowed?(url)
+
               begin
-                hsh = ActionController::Routing::Routes.recognize_path(url_parts[5])
-                unless hsh.nil? || hsh[:id]
-                  return true if path_allowed?(path_from_hash(hsh)) 
-                end
-              rescue Exception 
+                hash = ActionController::Routing::Routes.recognize_path(url, :method => method)
+                return path_allowed?(path_from_hash(hash)) if hash
+              rescue Exception
                 # continue on
               end
 
               # Passing in different domain
-              return true if remote_url?(url_parts[2])
-              false
+              return remote_url?(url_parts[2])
             end
       
             def access_denied(e)
@@ -88,8 +93,8 @@ module Lockdown
               end
             end
 
-            def path_from_hash(hsh)
-              hsh[:controller].to_s + "/" + hsh[:action].to_s
+            def path_from_hash(hash)
+              hash[:controller].to_s + "/" + hash[:action].to_s
             end
 
             def remote_url?(domain = nil)

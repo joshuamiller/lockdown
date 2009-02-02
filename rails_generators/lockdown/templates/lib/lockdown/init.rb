@@ -1,4 +1,3 @@
-require "lockdown"
 require File.join(File.dirname(__FILE__), "session")
 
 Lockdown::System.configure do
@@ -39,6 +38,10 @@ Lockdown::System.configure do
   #
   # :all_methods(:products) will return an array of all controller actions
   # for the products controller
+  #
+  # If you need to reference a namespaced controller use two underscores:
+  # :admin__products would tell lockdown to look for:
+  # app/controllers/admin/products_controller.rb
   #
   # if products is your standard RESTful resource you'll get:
   #   ["products/index , "products/show",

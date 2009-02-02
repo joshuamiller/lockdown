@@ -1,40 +1,76 @@
-require File.join(File.dirname(__FILE__), "lockdown", "classy-inheritance")
-require File.join(File.dirname(__FILE__), "lockdown", "helper")
+$:.unshift(File.dirname(__FILE__)) unless
+ $:.include?(File.dirname(__FILE__)) || 
+ $:.include?(File.expand_path(File.dirname(__FILE__)))
+
+require File.join("lockdown", "helper")
 
 module Lockdown
-  class << self
-    include Lockdown::Helper
+  extend Lockdown::Helper
 
-    def mixin
-      if mixin_resource?("frameworks")
-        unless mixin_resource?("orms")
-          raise NotImplementedError, "ORM unknown to Lockdown!"
-        end
+  VERSION = '0.7.1'
+
+  # Returns the version string for the library.
+  def self.version
+    VERSION
+  end
+
+  def self.major_version
+    version.split('.')[0].to_i
+  end
+
+  def self.minor_version
+    version.split('.')[1].to_i
+  end
+
+  def self.patch_version
+    version.split('.')[2].to_i
+  end
+
+  # Mixin Lockdown code to the appropriate framework and ORM
+  def self.mixin
+    if mixin_resource?("frameworks")
+      unless mixin_resource?("orms")
+        raise NotImplementedError, "ORM unknown to Lockdown!"
+      end
+
+      if File.exists?(Lockdown.init_file)
+        puts "=> Requiring Lockdown rules engine: #{Lockdown.init_file} \n"
+        require Lockdown.init_file
       else
-        raise NotImplementedError, "Framework unknown to Lockdown!"
+        puts "=> Note:: Lockdown couldn't find init file: #{Lockdown.init_file}\n"
+      end
+    else
+      puts "=> Note:: Lockdown cannot determine framework and therefore is not active.\n"
+    end
+  end # mixin
+
+  private
+
+  def self.mixin_resource?(str)
+    wildcard_path = File.join( File.dirname(__FILE__), 'lockdown', str , '*.rb' ) 
+    Dir[wildcard_path].each do |f|
+      require f
+      module_name = File.basename(f).split(".")[0]
+      module_class = eval("Lockdown::#{str.capitalize}::#{Lockdown.camelize(module_name)}")
+      if module_class.use_me?
+        include module_class
+        return true
       end
     end
-
-    private
-
-    def mixin_resource?(str)
-      Dir["#{File.dirname(__FILE__)}/lockdown/#{str}/*.rb"].each do |f|
-        require "#{f}"
-        mod = File.basename(f).split(".")[0]
-        mklass = eval("Lockdown::#{str.capitalize}::#{Lockdown.camelize(mod)}")
-        if mklass.use_me?
-          include mklass
-          return true
-        end
-      end
-      false
-    end
-  end # class block
+    false
+  end # mixin_resource?
 end # Lockdown
 
 
-require File.join(File.dirname(__FILE__), "lockdown", "system")
-require File.join(File.dirname(__FILE__), "lockdown", "controller")
-require File.join(File.dirname(__FILE__), "lockdown", "session")
+require File.join("lockdown", "context")
+require File.join("lockdown", "permission")
+require File.join("lockdown", "database")
+require File.join("lockdown", "session")
+require File.join("lockdown", "core_controller")
+require File.join("lockdown", "rules")
+require File.join("lockdown", "system")
+
+puts "=> Mixing in Lockdown version: #{Lockdown.version} \n"
 
 Lockdown.mixin
+

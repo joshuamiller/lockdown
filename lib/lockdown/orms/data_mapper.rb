@@ -12,7 +12,9 @@ module Lockdown
         end
 
         def mixin
-          orm_parent.send :include, Lockdown::Orm::DataMapper::Stamps
+          orm_parent.class_eval do
+            include Lockdown::Orm::DataMapper::Stamps
+          end
         end
       end # class block
 

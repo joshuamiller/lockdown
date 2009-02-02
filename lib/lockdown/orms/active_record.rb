@@ -12,7 +12,9 @@ module Lockdown
         end
 
         def mixin
-          Lockdown.orm_parent.send :include, Lockdown::Orms::ActiveRecord::Stamps
+          Lockdown.orm_parent.class_eval do
+            include Lockdown::Orms::ActiveRecord::Stamps
+          end
         end
       end # class block
 

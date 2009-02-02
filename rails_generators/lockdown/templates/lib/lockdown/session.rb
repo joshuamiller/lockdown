@@ -55,15 +55,16 @@ module Lockdown
   end # Session module
 end # Lockdown module
 
-<% if framework == "merb" -%>
-Merb::Controller.send :include, Lockdown::Session
-<% else %>
-ActionController::Base.send :include, Lockdown::Session
-ActionController::Base.send :helper_method, :logged_in?, 
-                                           :current_user,
-                                           :current_user_name, 
-                                           :current_user_id, 
-                                           :current_profile_id,
-                                           :current_user_is_admin?,
-                                           :current_user_access_in_group?
-<% end -%>
+ActionController::Base.class_eval do
+ include Lockdown::Session
+end
+
+ActionController::Base.class_eval do 
+  helper_method :logged_in?, 
+    :current_user,
+    :current_user_name, 
+    :current_user_id, 
+    :current_profile_id,
+    :current_user_is_admin?,
+    :current_user_access_in_group?
+end

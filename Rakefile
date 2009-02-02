@@ -1,28 +1,39 @@
-%w[rubygems rake rake/clean fileutils newgem rubigen].each { |f| require f }
-require File.dirname(__FILE__) + '/lib/lockdown/version'
+# Look in the tasks/setup.rb file for the various options that can be
+# configured in this Rakefile. The .rake files in the tasks directory
+# are where the options are used.
 
-# Generate all the Rake tasks
-# Run 'rake -T' to see list of generated tasks (from gem root directory)
-$hoe = Hoe.new('lockdown', Lockdown::VERSION::STRING) do |p|
-  p.developer('Andrew Stone', 'andy@stonean.com')
-  
-  p.changes                 = p.paragraphs_of("History.txt", 0..1).join("\n\n")
-  p.post_install_message    = 'PostInstall.txt'
-  p.rubyforge_name          = p.name
-  p.extra_deps              = [ ['classy-inheritance', '>=0.6.2'] ]
-  p.extra_dev_deps          = [ ['newgem', ">= #{::Newgem::VERSION}"] ]
-  
-  p.clean_globs |= %w[**/.DS_Store tmp *.log]
-  
-  path = (p.rubyforge_name == p.name) ? p.rubyforge_name : "\#{p.rubyforge_name}/\#{p.name}"
-  
-  p.remote_rdoc_dir = File.join(path.gsub(/^#{p.rubyforge_name}\/?/,''), 'rdoc')
-  
-  p.rsync_args = '-av --delete --ignore-errors'
+begin
+  require 'bones'
+  Bones.setup
+rescue LoadError
+  load 'tasks/setup.rb'
 end
 
-require 'newgem/tasks' # load /tasks/*.rake
-Dir['tasks/**/*.rake'].each { |t| load t }
+ensure_in_path 'lib'
+require 'lockdown'
 
-# TODO - want other tests/tasks run by default? Add them to the list
-# task :default => [:spec, :features]
+task :default => 'rcov'
+
+desc "Flog your code for Justice!"
+task :flog do
+    sh('flog lib/**/*.rb')
+end
+
+desc "Run all specs and rcov in a non-sucky way"
+Spec::Rake::SpecTask.new(:rcov) do |t|
+  t.spec_opts = IO.readlines("spec/spec.opts").map {|l| l.chomp.split " "}.flatten
+  t.spec_files = FileList['spec/**/*_spec.rb']
+  t.rcov = true
+  t.rcov_opts = IO.readlines("spec/rcov.opts").map {|l| l.chomp.split " "}.flatten
+end
+
+PROJ.name = 'lockdown'
+PROJ.authors = 'Andrew Stone'
+PROJ.email = 'andy@stonean.com'
+PROJ.url = 'http://stonean.com/wiki/lockdown'
+PROJ.version = Lockdown::VERSION
+PROJ.rubyforge.name = 'lockdown'
+
+PROJ.spec.opts << '--color'
+
+# EOF

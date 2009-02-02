@@ -66,7 +66,7 @@ module Lockdown
         const_get(klass)
       end
     end
-    
+
     private
 
     def string_name(str_sym)
